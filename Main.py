@@ -11,7 +11,7 @@ def main():
     DEFAULT_ROOMS = {
                         "Sanctuary" : "A large open room with rows of pews lining the carpeted floors.",
                         "Kitchen" : """A comfortably sized room with cooking equipment lining the walls and a central
-counter poking up through the tiled floors""",
+counter poking up through the tiled floors.""",
                         "Parish Hall" : """A large open room designed for children with a few tables for potlucks and
 games on top of the colorful carpet patterns of the floor.""",
                         "Confessionals" : """A small room with two identical boxes placed at the end, made for
@@ -20,8 +20,8 @@ confessing sins, with a hole between then for secret listening.""",
 St.Jude's. The electric box is located here.""",
                         "Bell Tower" : """A winding staircase that leads to an open area with dangerously low railing
 and the church's bell.""",
-                        "Pastor's Study" : """A small room similar to a library, with a desk in the center ad all
-sorts of books pertaining to religious doctrine"""
+                        "Pastor's Study" : """A small room similar to a library, with a desk in the center and all
+sorts of books pertaining to religious doctrine."""
                     }
     #This list will eventually be turned into a dict on generation where each NPC's value is their attributes.
     #May use named tuple for that. Haven't decided yet.
@@ -76,13 +76,12 @@ sorts of books pertaining to religious doctrine"""
                 user_file.write("\n")
                 user_file.write(name)
         with open(name, "w") as new_preset_file:
-            for index, room in enumerate(func_rooms):
-                if index != len(func_rooms) - 1:
-                    new_preset_file.write(f"{room}, ")
-                else:
-                    new_preset_file.write(str(room))
-            if type == "room" or type == "new":
-                new_preset_file.write("\n")
+            new_rooms_list = []
+            for name, val in func_rooms.items():
+                new_rooms_list.append(f"{name}:{val},")
+            write_me = f"{"/".join(new_rooms_list)[:-1]}"
+            new_preset_file.write(write_me.replace("\n", " "))
+            new_preset_file.write("\n")
             for index, npc in enumerate(npc_list):
                 if index != len(npc_list) - 1:
                     new_preset_file.write(f"{npc}, ")
@@ -111,23 +110,27 @@ sorts of books pertaining to religious doctrine"""
     def read_preset(name):
         with open(name, "r") as current_file:
             current_info = current_file.readlines()
-        rooms = current_info[0].split(",")
+        rooms = {}
+        room_info = current_info[0].split(",/")
+        for index, pair in enumerate(room_info):
+            #if index != len(room_info) - 1:
+            parts = pair.split(":")
+            val = parts[1]
+            rooms[parts[0]] = val
+
         npc_list = current_info[1].split(",")
 
         npc_attributes = {}
         attribute_info = current_info[2].split(",/")
-        for section in attribute_info:
-            parts = section.split(":")[:]
+        for pair in attribute_info:
+            parts = pair.split(":")[:]
             val = parts[1][2:-2].split(",")
             npc_attributes[parts[0]] = val
         wipe()
         print(f"{name} file info: ")
-        print("\n\tRooms:", end=" ")
-        for index, room in enumerate(rooms):
-            if index == len(rooms) - 1:
-                print(room, end="")
-            else:
-                print(room, end=", ")
+        print("\n\tRooms:")
+        for name, info in rooms.items():
+            print(f"{name} : {info}")
         print()
         print("\n\tNPC List:", end=" ")
         for index, npc in enumerate(npc_list):
@@ -144,78 +147,71 @@ sorts of books pertaining to religious doctrine"""
 
     def edit_preset():
         global user_name
-        current_preset_name = input("\nEnter the name of the file you wish to inspect or enter \"R\" to return: ").strip()
+        current_preset_name = input("\nEnter "
+                                    "the name of the file you wish to inspect or enter \"R\" to return: ").strip()
         with open(user_name, "r+") as preset_file:
             preset_info = preset_file.readlines()
             if current_preset_name.strip().upper() == "R":
                 edit_over = True
                 print_preset_names()
             elif current_preset_name in preset_info:
-                rooms, npc_list, npc_attributes = read_preset(current_preset_name)
-                #The Actual edit actions
-                changing_preset = True
+                editing_current = True
+                while editing_current == True:
+                    rooms, npc_list, npc_attributes = read_preset(current_preset_name)
+                    #The Actual edit actions
+                    changing_preset = True
 
-                new_rooms = rooms
-                new_npc_list = npc_list
-                new_npc_attributes = npc_attributes
-                print("\nEnter one of the following keywords to edit your preset: ")
-                print("\t\"A\" - Room list")
-                print("\t\"B\" - NPC name list")
-                print("\t\"C\" - Attribute list")
-                print("\tEnter anything else to return")
-                edit_nav = input("Enter: ").strip().upper()
+                    new_rooms = rooms
+                    new_npc_list = npc_list
+                    new_npc_attributes = npc_attributes
+                    print("\nEnter one of the following keywords to edit your preset: ")
+                    print("\t\"A\" - Room list")
+                    print("\t\"B\" - NPC name list")
+                    print("\t\"C\" - Attribute list")
+                    print("\tEnter anything else to return")
+                    edit_nav = input("Enter: ").strip().upper()
 
-                if edit_nav == "A":
-                    editing_rooms = True
-                    wipe()
-                    print(f"Enter room names one at a time, then enter a description. "
-                          f"Enter \"Done\" when you have finished entering names.\n")
-                    new_rooms = {}
-                    while editing_rooms == True:
-                        room_name = input("Enter Name: ").strip().title()
-                        if room_name == "Done":
-                            print("Changed Room List: ", end="")
-                            for index, room in enumerate(new_rooms):
-                                print(room, ":", new_rooms[room],)
-                            finalize_nav = input("\nDo you want to re-write rooms for this preset? (Y/N): ").strip().upper()
-                            if finalize_nav == "Y":
-                                write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "room")
-                            elif finalize_nav == "N":
-                                print("\n...Redirecting...\n")
-                            editing_rooms = False
-                            print_preset_names()
-                        else:
-                            room_description = input(f"Enter {room_name} Description: ").strip().capitalize()
-                            new_rooms[room_name] = room_description
-
-                elif edit_nav == "B":
-                    editing_npc_list = True
-                    wipe()
-                    print(f"Enter NPC names one at a time. Enter \"Done\" when you have finished entering names.\n")
-                    new_npc_list = []
-                    while editing_npc_list == True:
-                        room_name = input("Enter: ").strip().title()
-                        if room_name == "Done":
-                            print("Changed Room List: ", end="")
-                            for index, room in enumerate(new_npc_list):
-                                if index == len(new_npc_list) - 1:
-                                    print(room, end="")
+                    if edit_nav == "A":
+                        editing_rooms = True
+                        wipe()
+                        print(f"Enter room names one at a time, then enter a description. "
+                              f"Enter \"Done\" when you have finished entering names.\n")
+                        new_rooms = {}
+                        while editing_rooms == True:
+                            room_name = input("Enter Name: ").strip().title()
+                            if room_name == "Done":
+                                finalize_nav = input("\nDo you want to re-write rooms for this preset? (Y/anything else): ").strip().upper()
+                                if finalize_nav == "Y":
+                                    write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "room")
                                 else:
-                                    print(room, end=", ")
-                            finalize_nav = input(
-                                "\nDo you want to re-write rooms for this preset? (Y/N): ").strip().upper()
-                            if finalize_nav == "Y":
-                                write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "npc")
-                            elif finalize_nav == "N":
-                                print("\n...Redirecting...\n")
-                            editing_npc_list = False
-                        else:
-                            new_npc_list.append(room_name)
+                                    print("\n...Redirecting...\n")
+                                editing_rooms = False
+                                print_preset_names()
+                            else:
+                                room_description = input(f"Enter {room_name} Description: ").strip()
+                                new_rooms[room_name] = room_description
 
-                elif edit_nav == "C":
-                    editing_attributes = True
-                    wipe()
-                    while editing_attributes == True:
+                    elif edit_nav == "B":
+                        editing_npc_list = True
+                        wipe()
+                        print(f"Enter NPC names one at a time. Enter \"Done\" when you have finished entering names.\n")
+                        new_npc_list = []
+                        while editing_npc_list == True:
+                            room_name = input("Enter: ").strip().title()
+                            if room_name == "Done":
+                                finalize_nav = input(
+                                    "\nDo you want to re-write NPCs for this preset? (Y/anything else): ").strip().upper()
+                                if finalize_nav == "Y":
+                                    write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "npc")
+                                else:
+                                    print("\n...Redirecting...\n")
+                                editing_npc_list = False
+                            else:
+                                new_npc_list.append(room_name)
+
+                    elif edit_nav == "C":
+                        editing_attributes = True
+                        wipe()
                         print("\nEnter one of the following keywords to edit your attributes: ")
                         print("\t\"A\" - Hair Lengths")
                         print("\t\"B\" - Hair Colors")
@@ -225,10 +221,133 @@ sorts of books pertaining to religious doctrine"""
                         print("\t\"F\" - Pants Types")
                         print("\t\"G\" - Special Wear")
                         print("\t\"H\" - Special Items")
-                        print("Enter anything else to return")
-
-                else:
-                    print_preset_names()
+                        print("\tEnter anything else to return")
+                        edit_nav = input("Enter: ").strip().upper()
+                        wipe()
+                        change_list = []
+                        if edit_nav == "A":
+                            print("Enter Hair Lengths one at a time. Enter \"Done\" when you have finished entering Lengths.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Hair Lengths for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Hair Lengths"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "B":
+                            print("Enter Hair Colors one at a time. Enter \"Done\" when you have finished entering Colors.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Hair Colors for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Hair Colors"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "C":
+                            print("Enter Shoe Types one at a time. Enter \"Done\" when you have finished entering Shoes.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Shoe Types for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Shoes Types"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "D":
+                            print("Enter Outer Wear one at a time. Enter \"Done\" when you have finished entering Outer Wear.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Outer Wear for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Outer Wear"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "E":
+                            print("Enter Shirt Colors one at a time. Enter \"Done\" when you have finished entering Colors.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Shirt Colors for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Shirt Colors"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "F":
+                            print("Enter Pants Types one at a time. Enter \"Done\" when you have finished entering Pants.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Pants Types for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Pants Types"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "G":
+                            print("Enter Special Wear one at a time. Enter \"Done\" when you have finished entering Special Wear.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Special Wear for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Special Wear"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                        elif edit_nav == "H":
+                            print("Enter Special Items one at a time. Enter \"Done\" when you have finished entering Items.\n")
+                            while editing_attributes == True:
+                                add_me = input("Enter: ").strip()
+                                if add_me.title() == "Done":
+                                    finalize_nav = input("Do you want to re-write Special Items for this preset? (Y/anything else): ").strip().upper()
+                                    if finalize_nav == "Y":
+                                        new_npc_attributes["  Special Items"] = change_list
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        editing_attributes = False
+                                    else:
+                                        print("\n...Redirecting...\n")
+                                        editing_attributes = False
+                                else:
+                                    change_list.append(add_me)
+                    else:
+                        editing_current = False
+                        print_preset_names()
 
 
 
