@@ -112,7 +112,7 @@ sorts of books pertaining to religious doctrine."""
             new_preset_file.write(f"{"/".join(new_attribute_list)[:]}")
         input("\nFile Updated. (Enter) ")
 
-    def read_preset(name):
+    def read_preset(name, print_values=True):
         with open(name, "r") as current_file:
             current_info = current_file.readlines()
         rooms = {}
@@ -132,27 +132,28 @@ sorts of books pertaining to religious doctrine."""
             val = parts[1][2:-2].split(",!")
             npc_attributes[parts[0]] = val
         wipe()
-        print(f"{name} file info: ")
-        print("\n\tRooms:")
-        for name, info in rooms.items():
-            print(f"{name} : {info}")
-        print()
-        print("\n\tNPC List:", end=" ")
-        for index, npc in enumerate(npc_list):
-            if index == len(npc_list) - 1:
-                print(npc, end="")
-            else:
-                print(npc, end=", ")
-        print()
-        print("\n\tNPC Attributes:")
-        for key, val in npc_attributes.items():
-            final_val = ""
-            for index, word in enumerate(val):
-                final_val += f" {val[index]},"
-            if list(npc_attributes).index(key) == len(npc_attributes) - 1:
-                print(f"{key} : {final_val[:-3]}")
-            else:
-                print(f"{key} : {final_val[:-2]}")
+        if print_values:
+            print(f"{name} file info: ")
+            print("\n\tRooms:")
+            for name, info in rooms.items():
+                print(f"{name} : {info}")
+            print()
+            print("\n\tNPC List:", end=" ")
+            for index, npc in enumerate(npc_list):
+                if index == len(npc_list) - 1:
+                    print(npc, end="")
+                else:
+                    print(npc, end=", ")
+            print()
+            print("\n\tNPC Attributes:")
+            for key, val in npc_attributes.items():
+                final_val = ""
+                for index, word in enumerate(val):
+                    final_val += f" {val[index]},"
+                if list(npc_attributes).index(key) == len(npc_attributes) - 1:
+                    print(f"{key} : {final_val[:-3]}")
+                else:
+                    print(f"{key} : {final_val[:-2]}")
         return rooms, npc_list, npc_attributes
 
     def edit_preset():
@@ -474,7 +475,7 @@ sorts of books pertaining to religious doctrine."""
                         final_words.append(word)
                 generate_attributes[category] = final_words
         else:
-            generate_rooms, generate_npcs, generate_attributes = read_preset(preset_to_load)
+            generate_rooms, generate_npcs, generate_attributes = read_preset(preset_to_load, False)
             
     intro_sequence()
     start_screen()
