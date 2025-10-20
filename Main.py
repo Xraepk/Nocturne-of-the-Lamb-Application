@@ -47,7 +47,6 @@ sorts of books pertaining to religious doctrine."""
     #Variables
     user_name = ""
     user_info = ""
-    killer = ""
     rooms = DEFAULT_ROOMS
     npc_list = DEFAULT_NPC_LIST
     npc_attributes = DEFAULT_NPC_ATTRIBUTES
@@ -84,7 +83,7 @@ sorts of books pertaining to religious doctrine."""
             new_preset_file.write("\n")
             for index, npc in enumerate(npc_list):
                 if index != len(npc_list) - 1:
-                    new_preset_file.write(f"{npc}, ")
+                    new_preset_file.write(f"{npc},!")
                 else:
                     new_preset_file.write(str(npc))
             if type == "npc" or type == "new":
@@ -95,16 +94,22 @@ sorts of books pertaining to religious doctrine."""
                 val = ""
                 if type == "new":
                     for word in str(attribute).split(","):
-                        val += f"{word},"
+                        val += f"{word},!"
                     val = val[:-1]
                     new_attribute_list.append(f"  {item}:{val},")
                 else:
                     val += "  "
                     for word in attribute:
-                        val += f"{word},"
-                    val += " "
+                        if attribute.index(word) == len(attribute) - 1 and list(attributes).index(item) == len(attributes) - 1:
+                            if type == "items":
+                                val += f"{word}   "
+                            else:
+                                val += f"{word} "
+                        else:
+                            val += f"{word},!"
+                    val += ""
                     new_attribute_list.append(f"{item}:{val},")
-            new_preset_file.write(f"{"/".join(new_attribute_list)[:-1]}")
+            new_preset_file.write(f"{"/".join(new_attribute_list)[:]}")
         input("\nFile Updated. (Enter) ")
 
     def read_preset(name):
@@ -118,13 +123,13 @@ sorts of books pertaining to religious doctrine."""
             val = parts[1]
             rooms[parts[0]] = val
 
-        npc_list = current_info[1].split(",")
+        npc_list = current_info[1].split(",!")
 
         npc_attributes = {}
         attribute_info = current_info[2].split(",/")
         for pair in attribute_info:
             parts = pair.split(":")[:]
-            val = parts[1][2:-2].split(",")
+            val = parts[1][2:-2].split(",!")
             npc_attributes[parts[0]] = val
         wipe()
         print(f"{name} file info: ")
@@ -141,8 +146,13 @@ sorts of books pertaining to religious doctrine."""
         print()
         print("\n\tNPC Attributes:")
         for key, val in npc_attributes.items():
-            print(f"{key} : {val}")
-        print()
+            final_val = ""
+            for index, word in enumerate(val):
+                final_val += f" {val[index]},"
+            if list(npc_attributes).index(key) == len(npc_attributes) - 1:
+                print(f"{key} : {final_val[:-3]}")
+            else:
+                print(f"{key} : {final_val[:-2]}")
         return rooms, npc_list, npc_attributes
 
     def edit_preset():
@@ -262,7 +272,7 @@ sorts of books pertaining to religious doctrine."""
                                 if add_me.title() == "Done":
                                     finalize_nav = input("Do you want to re-write Shoe Types for this preset? (Y/anything else): ").strip().upper()
                                     if finalize_nav == "Y":
-                                        new_npc_attributes["  Shoes Types"] = change_list
+                                        new_npc_attributes["  Shoe Types"] = change_list
                                         write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
                                         editing_attributes = False
                                     else:
@@ -338,7 +348,7 @@ sorts of books pertaining to religious doctrine."""
                                     finalize_nav = input("Do you want to re-write Special Items for this preset? (Y/anything else): ").strip().upper()
                                     if finalize_nav == "Y":
                                         new_npc_attributes["  Special Items"] = change_list
-                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "attribute")
+                                        write_preset(current_preset_name, new_rooms, new_npc_list, new_npc_attributes, "items")
                                         editing_attributes = False
                                     else:
                                         print("\n...Redirecting...\n")
@@ -433,14 +443,39 @@ sorts of books pertaining to religious doctrine."""
             else:
                 print("Input must be \"ST\", \"SE\", or \"P\".\n")
 
-    def generate(NPCs=DEFAULT_NPC_LIST):
-        global killer
-        killer = random.choice(NPCs)
-        print()
-        print(killer)
+    def generate():
+        print_preset_names()
+        preset_accepted = False
+        global user_name
 
+        generate_rooms = {}
+        generate_npcs = []
+        generate_attributes = {}
 
-
+        while preset_accepted == False:
+            preset_to_load =  input("\nEnter preset name for generation. (Enter nothing for Default Preset): ").strip()
+            with open(user_name, "r") as user_file:
+                if preset_to_load.strip() == "":
+                    preset_to_load = "Default"
+                    preset_accepted = True
+                elif preset_to_load in user_file:
+                    print("yup")
+                    preset_accepted = True
+                else:
+                    print("Preset name not recognized. Try again.")
+        if preset_to_load == "Default":
+            for room, description in DEFAULT_ROOMS.items():
+                generate_rooms[room.replace("\n", " ")] = description.replace("\n", " ")
+            generate_npcs = DEFAULT_NPC_LIST
+            for category, section in DEFAULT_NPC_ATTRIBUTES.items():
+                final_words = []
+                for words in section:
+                    for word in words.split(","):
+                        final_words.append(word)
+                generate_attributes[category] = final_words
+        else:
+            generate_rooms, generate_npcs, generate_attributes = read_preset(preset_to_load)
+            
     intro_sequence()
     start_screen()
     generate()
